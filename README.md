@@ -21,7 +21,7 @@ pip install openai
 Export your OpenAI API key as an environment variable. Replace `YOUR_API_KEY` with your actual OpenAI API key.
 
 ```bash
-export OPENAI_API_KEY='YOUR_API_KEY'
+export OPENAI_API_KEY='...'
 ```
 
 ### Running the Temporal Server

@@ -1,4 +1,6 @@
 # server.py
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, HTTPException
 from temporalio.client import Client
@@ -6,12 +8,14 @@ from temporalio.client import Client
 from activities import TranslateParams
 from workflow import LangChainWorkflow
 
-app = FastAPI()
 
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     app.state.temporal_client = await Client.connect("localhost:7233")
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.post("/translate")
