@@ -1,38 +1,36 @@
 import asyncio
 
-from temporalio.client import Client
 from temporalio.worker import Worker
 
-from activities import translate_phrase
+from activities import translate_phrase, complete_phase
+from log_config import setup_logging, get_logger
+from server import connect_temporal
 from workflow import LangChainWorkflow
 
 interrupt_event = asyncio.Event()
 
+logger = get_logger(__name__)
+
 
 async def main():
-    client = await Client.connect("localhost:7233")
+    client = await connect_temporal()
     worker = Worker(
         client,
         task_queue="langchain-task-queue",
         workflows=[LangChainWorkflow],
-        activities=[translate_phrase],
+        activities=[translate_phrase, complete_phase],
     )
 
-    print("\nWorker started, ctrl+c to exit\n")
+    logger.info("Worker started, ctrl+c to exit")
     await worker.run()
     try:
         # Wait indefinitely until the interrupt event is set
         await interrupt_event.wait()
     finally:
         # The worker will be shutdown gracefully due to the async context manager
-        print("\nShutting down the worker\n")
+        logger.info("Shutting down the worker")
 
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    try:
-        loop.run_until_complete(main())
-    except KeyboardInterrupt:
-        print("\nInterrupt received, shutting down...\n")
-        interrupt_event.set()
-        loop.run_until_complete(loop.shutdown_asyncgens())
+    setup_logging()
+    asyncio.run(main())

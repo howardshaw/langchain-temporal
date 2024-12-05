@@ -1,0 +1,37 @@
+include:
+  - path: ./docker-compose-base.yml
+    env_file: ./.env
+
+services:
+  worker:
+    build: .
+    command: python worker.py
+    volumes:
+      - .:/app
+    environment:
+      - TEMPORAL_HOST=temporal
+      - REDIS_HOST=redis
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+      - redis
+
+  server:
+    build: .
+    command: python server.py
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - .:/app
+    environment:
+      - TEMPORAL_HOST=temporal
+      - REDIS_HOST=redis
+    networks:
+      - temporal-network
+    depends_on:
+      - temporal
+      - redis
